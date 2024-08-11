@@ -9,16 +9,15 @@ import (
 func main() {
 	fmt.Println("Word Guesser made with Genetic Algorithms")
 
-	targetPhrase := "vince gwapo"
-	populationCount := 10000
-	mutationRate := 0.2
+	targetPhrase := "to live is to breathe"
+	populationCount := 1000
+	mutationRate := 0.01
 
 	guesser := wg.NewGuesser(targetPhrase, populationCount, float32(mutationRate))
 
 	fmt.Println("Initializing Population.")
 	guesser.Init()
 	fmt.Println("Population initialized.")
-	fmt.Println("Initial Population:")
 	guesser.Evaluate()
 
 	for {
@@ -28,13 +27,21 @@ func main() {
 		command := ""
 		fmt.Scanln(&command)
 
+		if command == "r" {
+			fmt.Println("Resetting generation..")
+			fmt.Println("Initializing Population.")
+			guesser.Init()
+			fmt.Println("Population initialized.")
+			continue
+		}
 		if command == "n" || command == "" {
 			guesser.Iterate()
 			fmt.Println("Generation: ", guesser.GenerationCount)
 			fmt.Println("\nBest: ")
 			wg.PrintMonkey(guesser.BestMonkey)
+			continue
 		}
-		if command == "quit" {
+		if command == "q" {
 			fmt.Println("Quitting word guesser, bye!")
 			break
 		}

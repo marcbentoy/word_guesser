@@ -94,26 +94,26 @@ func (g *Guesser) Evaluate() {
 
 // Generates a new itereation of population
 func (g *Guesser) Iterate() {
-	// 2. generate a parents pool
 	g.PopulateParentsIndexPool()
 
-	// 3. generate new population
+	// generate new population
 	newPopulation := &[]Monkey{}
 	for range g.populationCount {
-		// 3.1. select two parents
+		// selection
 		parentA := g.Select()
 		parentB := g.Select()
 
-		// 3.2. crossover
+		// crossover
 		offspring := parentA.Crossover(parentB)
+
+		// mutation
+		offspring.Mutate(g.mutationRate)
+
 		*newPopulation = append(*newPopulation, *offspring)
 	}
 
-	// 4. update the previous population to newly generation one
 	g.Population = &[]Monkey{}
 	g.Population = newPopulation
-
-	// 5. increment generation
 	g.GenerationCount++
 
 	g.Evaluate()
