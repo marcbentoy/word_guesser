@@ -1,7 +1,8 @@
 package wordguesser
 
 import (
-	ga "github.com/marcbentoy/wordguesser/ga"
+	"math/rand/v2"
+
 	"github.com/marcbentoy/wordguesser/utils"
 )
 
@@ -17,25 +18,44 @@ func NewMonkey(length int) *Monkey {
 	}
 }
 
-// // Crossover implements ga.Individual.
-// func (m Monkey) Crossover(*ga.Individual) *ga.Individual {
-// 	panic("unimplemented")
-// }
-
-// // Mutate implements ga.Individual.
-// func (m Monkey) Mutate() {
-// 	panic("unimplemented")
-// }
-
 // Randomly change the gene's value
-func (m *Monkey) Mutate() {
+func (m *Monkey) Mutate(mutationRate float32) {
+	shouldMutate := rand.Float32()
+	if shouldMutate <= mutationRate {
+		// random index of the gene
+		randIndex := rand.IntN(len(m.Gene))
+		// random character to replace the previous gene character
+		randChar := utils.RandomChars(1)
 
+		// convert the gene to slice of runes
+		indGene := []rune(m.Gene)
+		indGene[randIndex] = rune(randChar[0])
+
+		// update the mutated gene
+		m.Gene = string(indGene)
+	}
 }
 
-func (m *Monkey) Crossover(partner *ga.Individual) *ga.Individual {
-	offspring := &Monkey{}
+// Generates a new Monkey with a combined gene at a random point
+func (m Monkey) Crossover(partner *Monkey) *Monkey {
+	offspring := &Monkey{
+		Gene:  "",
+		Score: 0,
+	}
 
-	var newInd ga.Individual = offspring
+	// point of intersection
+	point := rand.IntN(len(m.Gene))
 
-	return &newInd
+	offspring.Gene += m.Gene[:point]
+	offspring.Gene += partner.Gene[point:]
+
+	return offspring
+}
+
+func (m *Monkey) Evaluate(targetPhrase string) {
+	for c := range len(targetPhrase) {
+		if m.Gene[c] == targetPhrase[c] {
+			m.Score++
+		}
+	}
 }

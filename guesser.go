@@ -2,92 +2,115 @@ package wordguesser
 
 import (
 	"math/rand/v2"
-
-	"github.com/marcbentoy/wordguesser/ga"
 )
 
 type Guesser struct {
 	targetPhrase     string
 	populationCount  int
 	mutationRate     float32
-	generationCount  int
-	parentsIndexPool []int
-	population       *[]Monkey
+	GenerationCount  int
+	BestMonkey       *Monkey
+	parentsIndexPool *[]int
+	Population       *[]Monkey
 }
 
 func NewGuesser(targetPhrase string, populationCount int, mutationRate float32) *Guesser {
 	return &Guesser{
 		populationCount:  populationCount,
 		mutationRate:     mutationRate,
-		generationCount:  0,
+		GenerationCount:  0,
 		targetPhrase:     targetPhrase,
-		parentsIndexPool: []int{},
-		population:       &[]Monkey{},
+		BestMonkey:       &Monkey{},
+		parentsIndexPool: &[]int{},
+		Population:       &[]Monkey{},
 	}
 }
 
 // Randomly populates the individuals' genes
 func (g *Guesser) Init() {
 	// reset the population and generations
-	g.population = &[]Monkey{}
-	g.generationCount = 0
+	g.Population = &[]Monkey{}
+	g.GenerationCount = 0
 
 	for range g.populationCount {
-		*g.population = append(*g.population, *NewMonkey(len(g.targetPhrase)))
+		*g.Population = append(*g.Population, *NewMonkey(len(g.targetPhrase)))
 	}
-}
-
-// Selects a parent candidate from the population
-func (g *Guesser) Select() *ga.Individual {
-	randIndex := rand.IntN(len(g.parentsIndexPool))
-
-	candidateMonkey := &(*g.population)[randIndex]
-	var candidate ga.Individual = candidateMonkey
-	return &candidate
 }
 
 // Populates the index pool of parent candidates
 func (g *Guesser) PopulateParentsIndexPool() {
 	// empty out pool first
-	g.parentsIndexPool = []int{}
+	g.parentsIndexPool = &[]int{}
 
 	// add the individual's index base from its score
-	for i, ind := range *g.population {
+	for i, ind := range *g.Population {
 		for range ind.Score {
-			g.parentsIndexPool = append(g.parentsIndexPool, i)
+			*g.parentsIndexPool = append(*g.parentsIndexPool, i)
 		}
 	}
 }
 
-// Evaluates the fitness scores of all individuals
+// Selects a parent candidate from the population
+func (g *Guesser) Select() *Monkey {
+	// edge case if parent's pool is 0
+	if len(*g.parentsIndexPool) == 0 {
+		randIndex := rand.IntN(len(*g.Population))
+		candidateMonkey := &(*g.Population)[randIndex]
+		return candidateMonkey
+	}
+
+	// randomize the index selection
+	randIndex := rand.IntN(len(*g.parentsIndexPool))
+	indIndex := (*g.parentsIndexPool)[randIndex]
+
+	candidateMonkey := &(*g.Population)[indIndex]
+	return candidateMonkey
+}
+
+// Evaluate calculates and sets the fitness scores of all individuals
 func (g *Guesser) Evaluate() {
-	for _, ind := range *g.population {
-		for c := range len(g.targetPhrase) {
-			if ind.Gene[c] == g.targetPhrase[c] {
-				ind.Score++
+	highestScore := 0
+
+	for i := range g.populationCount {
+		ind := &(*g.Population)[i]
+
+		ind.Evaluate(g.targetPhrase)
+
+		if ind.Score > highestScore {
+			newBest := &Monkey{
+				Gene:  ind.Gene,
+				Score: ind.Score,
 			}
+			g.BestMonkey = newBest
+			highestScore = ind.Score
 		}
+
 	}
 }
 
 // Generates a new itereation of population
 func (g *Guesser) Iterate() {
-	// 1. evaluate the population
-	g.Evaluate()
-
 	// 2. generate a parents pool
 	g.PopulateParentsIndexPool()
 
 	// 3. generate new population
-	newPopulation := &[]ga.Individual{}
-	*newPopulation = append(*newPopulation, NewMonkey(10))
+	newPopulation := &[]Monkey{}
+	for range g.populationCount {
+		// 3.1. select two parents
+		parentA := g.Select()
+		parentB := g.Select()
 
-	// 3.1. select two parents
-	parentA := g.Select()
-	parentB := g.Select()
+		// 3.2. crossover
+		offspring := parentA.Crossover(parentB)
+		*newPopulation = append(*newPopulation, *offspring)
+	}
 
-	// 3.2. crossover
-	parentA.Crossover(parentB)
-	// 3.3. check if newPopulation has populationCount
-	// 4. increment generation
+	// 4. update the previous population to newly generation one
+	g.Population = &[]Monkey{}
+	g.Population = newPopulation
+
+	// 5. increment generation
+	g.GenerationCount++
+
+	g.Evaluate()
 }
