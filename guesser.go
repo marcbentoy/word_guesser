@@ -74,7 +74,11 @@ func (g *Guesser) Evaluate() {
 	for i := range g.populationCount {
 		ind := &(*g.Population)[i]
 
-		ind.Evaluate(g.targetPhrase)
+		for c := range len(g.targetPhrase) {
+			if ind.Gene[c] == g.targetPhrase[c] {
+				ind.Score++
+			}
+		}
 
 		if ind.Score > highestScore {
 			newBest := &Monkey{

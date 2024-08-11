@@ -6,7 +6,6 @@ import (
 
 func PrintMonkey(ind *Monkey) {
 	fmt.Println(ind.Gene, "\t", ind.Score)
-	// fmt.Println("vincegwapo", "\t-")
 }
 
 func PrintPopulation(population *[]Monkey) {

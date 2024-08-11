@@ -51,11 +51,3 @@ func (m Monkey) Crossover(partner *Monkey) *Monkey {
 
 	return offspring
 }
-
-func (m *Monkey) Evaluate(targetPhrase string) {
-	for c := range len(targetPhrase) {
-		if m.Gene[c] == targetPhrase[c] {
-			m.Score++
-		}
-	}
-}
