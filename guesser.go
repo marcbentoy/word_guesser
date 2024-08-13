@@ -32,6 +32,8 @@ func (g *Guesser) Init() {
 	g.Population = &[]Monkey{}
 	g.GenerationCount = 0
 
+	g.BestMonkey = &Monkey{}
+
 	for range g.populationCount {
 		*g.Population = append(*g.Population, *NewMonkey(len(g.targetPhrase)))
 	}
@@ -69,26 +71,26 @@ func (g *Guesser) Select() *Monkey {
 
 // Evaluate calculates and sets the fitness scores of all individuals
 func (g *Guesser) Evaluate() {
-	highestScore := 0
-
 	for i := range g.populationCount {
+		// TODO: move this to a goroutine function
+
 		ind := &(*g.Population)[i]
 
+		// evaluate the score of an individual
 		for c := range len(g.targetPhrase) {
 			if ind.Gene[c] == g.targetPhrase[c] {
 				ind.Score++
 			}
 		}
 
-		if ind.Score > highestScore {
+		// update the best monkey
+		if ind.Score > g.BestMonkey.Score {
 			newBest := &Monkey{
 				Gene:  ind.Gene,
 				Score: ind.Score,
 			}
 			g.BestMonkey = newBest
-			highestScore = ind.Score
 		}
-
 	}
 }
 
@@ -99,6 +101,8 @@ func (g *Guesser) Iterate() {
 	// generate new population
 	newPopulation := &[]Monkey{}
 	for range g.populationCount {
+		// TODO: move this to a goroutine function
+
 		// selection
 		parentA := g.Select()
 		parentB := g.Select()
