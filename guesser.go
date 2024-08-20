@@ -2,6 +2,7 @@ package wordguesser
 
 import (
 	"math/rand/v2"
+	"sync"
 )
 
 type Guesser struct {
@@ -71,27 +72,34 @@ func (g *Guesser) Select() *Monkey {
 
 // Evaluate calculates and sets the fitness scores of all individuals
 func (g *Guesser) Evaluate() {
+	var wg sync.WaitGroup
 	for i := range g.populationCount {
-		// TODO: move this to a goroutine function
+		wg.Add(1)
 
-		ind := &(*g.Population)[i]
+		go func() {
+			defer wg.Done()
 
-		// evaluate the score of an individual
-		for c := range len(g.targetPhrase) {
-			if ind.Gene[c] == g.targetPhrase[c] {
-				ind.Score++
+			ind := &(*g.Population)[i]
+
+			// evaluate the score of an individual
+			for c := range len(g.targetPhrase) {
+				if ind.Gene[c] == g.targetPhrase[c] {
+					ind.Score++
+				}
 			}
-		}
 
-		// update the best monkey
-		if ind.Score > g.BestMonkey.Score {
-			newBest := &Monkey{
-				Gene:  ind.Gene,
-				Score: ind.Score,
+			// update the best monkey
+			if ind.Score > g.BestMonkey.Score {
+				newBest := &Monkey{
+					Gene:  ind.Gene,
+					Score: ind.Score,
+				}
+				g.BestMonkey = newBest
 			}
-			g.BestMonkey = newBest
-		}
+		}()
 	}
+
+	wg.Wait()
 }
 
 // Generates a new itereation of population
@@ -100,21 +108,35 @@ func (g *Guesser) Iterate() {
 
 	// generate new population
 	newPopulation := &[]Monkey{}
+
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+
 	for range g.populationCount {
-		// TODO: move this to a goroutine function
+		wg.Add(1)
 
-		// selection
-		parentA := g.Select()
-		parentB := g.Select()
+		go func() {
+			defer wg.Done()
 
-		// crossover
-		offspring := parentA.Crossover(parentB)
+			// selection
+			parentA := g.Select()
+			parentB := g.Select()
 
-		// mutation
-		offspring.Mutate(g.mutationRate)
+			// crossover
+			offspring := parentA.Crossover(parentB)
 
-		*newPopulation = append(*newPopulation, *offspring)
+			// mutation
+			offspring.Mutate(g.mutationRate)
+
+			mu.Lock()
+			*newPopulation = append(*newPopulation, *offspring)
+			mu.Unlock()
+		}()
+
 	}
+
+	// wait for all goroutines to finish waiting
+	wg.Wait()
 
 	g.Population = &[]Monkey{}
 	g.Population = newPopulation

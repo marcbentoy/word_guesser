@@ -9,7 +9,7 @@ import (
 func main() {
 	fmt.Println("Word Guesser made with Genetic Algorithms")
 
-	targetPhrase := "vince gwapo kaayo to da max level"
+	targetPhrase := "Vince gwapo kaayo to da max level"
 	populationCount := 1000
 	mutationRate := 0.01
 
