@@ -102,7 +102,7 @@ func (g *Guesser) Evaluate() {
 	wg.Wait()
 }
 
-// Generates a new itereation of population
+// Generates a new iteration of population
 func (g *Guesser) Iterate() {
 	g.PopulateParentsIndexPool()
 
